@@ -64,6 +64,11 @@ h1 {
   font-size: 2rem;
   margin-block: 4px;
 }
+
+[hidden] {
+  display: none;
+}
+
 #visualization {
   border: 1px solid #ddd;
   border-radius: 4px;

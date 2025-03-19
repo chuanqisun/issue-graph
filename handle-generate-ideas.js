@@ -33,19 +33,17 @@ export async function handleGenerateIdeas() {
       const [issueData, openai] = await Promise.all([fetchIssueData(owner, repo, token), openaiAsync]);
       console.log(openai);
 
-      const serializedGraph = issueData.nodes
-        .map((node) =>
-          `
-#${node.id} ${node.title}
-type: ${node.labels.map((label) => label.name).join(", ")}
-      `.trim()
-        )
-        .join("\n\n");
+      const serializedGraph = issueData.nodes.map((node) => `[${node.labels.map((label) => label.name).join(", ")}] #${node.id} ${node.title}`).join("\n");
 
-      const existingIdeas = getExistingIdeas();
+      const [existingIdeas, discardedIdeas] = [getExistingIdeas(), getDiscardedIdeas()];
       const existingIdeasPrompt = `
-The user already considered the following idea as good. Make sure your new ideas are meaningfully different from these:
-${existingIdeas.map((idea) => `- ${idea.title} (${idea.sourceIds.join(", ")})`).join("\n")}
+The user is inspired by the following ideas. Make sure your new ideas are meaningfully different from these:
+${existingIdeas.map((idea) => `- ${idea.title} (sources: ${idea.sourceIds.join(", ")})`).join("\n")}
+        `.trim();
+
+      const discardedIdeasPrompt = `
+The user rejected the following ideas. Avoid similar ideas:
+${discardedIdeas.map((idea) => `- ${idea.title} (sources: ${idea.sourceIds.join(", ")})`).join("\n")}
         `.trim();
 
       const newIdeas = await openai.responses.create({
@@ -57,6 +55,7 @@ Generate innovative and inspiring ideas based on the content in the backlog:
 ${serializedGraph}
 \`\`\`
 ${existingIdeas ? `\n${existingIdeasPrompt}\n` : ""}
+${discardedIdeas ? `\n${discardedIdeasPrompt}\n` : ""}
 Respond 7 ideas in this JSON format:
 type Response {
   ideas: {
@@ -110,8 +109,9 @@ type Response {
   // handle discard
   document.getElementById("ideas").addEventListener("click", (event) => {
     if (event.target.matches("[data-discard]")) {
+      event.preventDefault();
       const card = event.target.closest(".idea-card");
-      card?.remove();
+      card.hidden = true;
     }
   });
 }
@@ -135,10 +135,21 @@ function renderIdeaCard(title, description, sourceIds, owner, repo) {
 }
 
 function getExistingIdeas() {
-  const existingIdeas = document.querySelectorAll(".idea-card");
+  const existingIdeas = document.querySelectorAll(".idea-card:not([hidden])");
   return Array.from(existingIdeas).map((card) => ({
     title: card.querySelector("h3").textContent,
-    description: card.querySelector("p").textContent,
-    sourceIds: Array.from(card.querySelectorAll("a")).map((link) => link.textContent.replace("#", "")),
+    sourceIds: Array.from(card.querySelectorAll("a"))
+      .filter((link) => link.textContent.startsWith("#"))
+      .map((link) => link.textContent.replace("#", "")),
+  }));
+}
+
+function getDiscardedIdeas() {
+  const discardedIdeas = document.querySelectorAll(".idea-card[hidden]");
+  return Array.from(discardedIdeas).map((card) => ({
+    title: card.querySelector("h3").textContent,
+    sourceIds: Array.from(card.querySelectorAll("a"))
+      .filter((link) => link.textContent.startsWith("#"))
+      .map((link) => link.textContent.replace("#", "")),
   }));
 }
