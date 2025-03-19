@@ -3,7 +3,7 @@
  * @param {string} owner
  * @param {string} repo
  * @param {string} token
- * @returns
+ * @returns {{ nodes: {id: number, title: string, url: string, labels: {name: string}[]}[], links: {source: number, target: number}[], legendData: { [key: string]: string } }}
  */
 export async function fetchIssueData(owner, repo, token) {
   // GraphQL query to fetch open issues and their cross-references
