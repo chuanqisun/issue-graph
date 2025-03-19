@@ -46,7 +46,7 @@ type: ${node.labels.map((label) => label.name).join(", ")}
       const newIdeas = await openai.responses.create({
         model: "o3-mini",
         input: `
-Generate innovative ideas based on the content in the backlog:
+Generate innovative and inspiring ideas based on the content in the backlog:
 
 \`\`\`backlog
 ${serializedGraph}
@@ -72,12 +72,27 @@ type Response {
         stream: true,
       });
 
-      for await (const chunk of newIdeas) {
-        const parser = await parserAsync;
-        console.log(chunk);
-      }
+      const mountedParser = parserAsync.then((parser) => {
+        parser.onValue = (entry) => {
+          if (typeof entry.key === "number" && typeof entry?.value?.title === "string") {
+            console.log("Parsed value:", entry.value);
+            renderIdeaCard(entry.value.title, entry.value.description, entry.value.sourceIds, owner, repo);
+          }
+        };
 
-      document.getElementById("ideas").textContent = JSON.stringify(issueData);
+        return parser;
+      });
+
+      for await (const chunk of newIdeas) {
+        try {
+          // await mountedParser.write(chunk
+          if (chunk.type === "response.output_text.delta") {
+            (await mountedParser).write(chunk.delta);
+          }
+        } catch (error) {
+          console.error("Error parsing chunk:", error);
+        }
+      }
     } catch (error) {
       errorElement.textContent = `Error: ${error.message}`;
       errorElement.style.display = "block";
@@ -86,4 +101,20 @@ type Response {
       loadingElement.style.display = "none";
     }
   });
+}
+
+function renderIdeaCard(title, description, sourceIds, owner, repo) {
+  const sourceLinks = sourceIds.map((id) => `<a href="https://github.com/${owner}/${repo}/issues/${id}" target="_blank">#${id}</a>`).join(", ");
+  const newIssueLink = `<a href="https://github.com/${owner}/${repo}/issues/new?template=inspiration-template.md&title=${encodeURIComponent(
+    title
+  )}&body=${encodeURIComponent(description)}" target="_blank">Add</a>`;
+
+  const card = document.createElement("div");
+  card.className = "idea-card";
+  card.innerHTML = `
+    <h3>${title}</h3>
+    <p>${description}</p>
+    <p>${newIssueLink} | sources: ${sourceLinks}</p>
+  `;
+  document.getElementById("ideas").appendChild(card);
 }

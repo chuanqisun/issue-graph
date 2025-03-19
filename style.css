@@ -24,6 +24,19 @@ button {
   padding: 4px;
   font-size: inherit;
 }
+.idea-card {
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  display: grid;
+  gap: 8px;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 10px;
+
+  > * {
+    margin-block: 0;
+  }
+}
 input {
   width: 100%;
   box-sizing: border-box;
