@@ -12,11 +12,11 @@ body {
   gap: 8px;
 }
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 2px;
 }
 label {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 2px;
   font-weight: bold;
 }
 input,
@@ -38,6 +38,12 @@ button {
 }
 button:hover {
   background-color: #2c974b;
+}
+
+.button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 h1 {
   font-size: 2rem;

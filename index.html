@@ -12,17 +12,17 @@
       <h1>GitHub Issue Graph Visualizer</h1>
 
       <div class="form-group">
-        <label for="owner">Repository Owner:</label>
+        <label for="owner">Repository Owner</label>
         <input type="text" id="owner" placeholder="e.g., octocat" />
       </div>
 
       <div class="form-group">
-        <label for="repo">Repository Name:</label>
+        <label for="repo">Repository Name</label>
         <input type="text" id="repo" placeholder="e.g., hello-world" />
       </div>
 
       <div class="form-group">
-        <label for="token">GitHub Access Token:</label>
+        <label for="token">GitHub Access Token</label>
         <input type="password" id="token" placeholder="Paste your GitHub access token here" />
         <small
           ><a href="https://github.com/settings/personal-access-tokens/new" target="_blank">Create a new token</a> with the approperiate resource owner and
@@ -30,10 +30,21 @@
         >
       </div>
 
-      <button id="visualize">Visualize Issue Graph</button>
+      <div class="form-group">
+        <label for="openai-api-key">OpenAI API Key</label>
+        <input type="password" id="openai-api-key" placeholder="Paste your OpenAI API key here" />
+      </div>
+
+      <div class="button-group">
+        <button id="visualize">Visualize Issue Graph</button>
+        <button id="generateIdeas">Generate ideas</button>
+      </div>
 
       <div id="error"></div>
-      <div id="loading">Loading issue data... This may take a moment.</div>
+
+      <div id="loading">Loading...</div>
+
+      <div id="ideas"></div>
 
       <div id="visualization"></div>
 
