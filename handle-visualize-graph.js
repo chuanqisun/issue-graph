@@ -31,7 +31,12 @@ export function handleVisualizeGraph() {
     }
   });
 
+  let resizeTimer;
+
   function visualizeIssueGraph(data) {
+    // Clear any existing SVG
+    d3.select("#visualization").select("svg").remove();
+
     const width = document.getElementById("visualization").clientWidth;
     const height = 600;
 
@@ -196,6 +201,29 @@ export function handleVisualizeGraph() {
       event.subject.fy = null;
     }
   }
+
+  // Add event listener for window resize
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      const owner = document.getElementById("owner").value.trim();
+      const repo = document.getElementById("repo").value.trim();
+      const token = document.getElementById("token").value.trim();
+
+      if (owner && repo && token) {
+        fetchIssueData(owner, repo, token)
+          .then((issueData) => {
+            visualizeIssueGraph(issueData);
+          })
+          .catch((error) => {
+            const errorElement = document.getElementById("error");
+            errorElement.textContent = `Error: ${error.message}`;
+            errorElement.style.display = "block";
+            console.error(error);
+          });
+      }
+    }, 250); // Debounce the resize event
+  });
 
   // Function to update the legend with the actual colors
   function updateLegend(colors) {
