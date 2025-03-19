@@ -54,6 +54,8 @@ button:hover {
 }
 
 .button-group {
+  position: sticky;
+  top: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;

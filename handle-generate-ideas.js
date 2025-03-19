@@ -28,7 +28,6 @@ export async function handleGenerateIdeas() {
 
     errorElement.style.display = "none";
     loadingElement.style.display = "block";
-    document.getElementById("ideas").innerHTML = "";
 
     try {
       const [issueData, openai] = await Promise.all([fetchIssueData(owner, repo, token), openaiAsync]);
@@ -43,6 +42,12 @@ type: ${node.labels.map((label) => label.name).join(", ")}
         )
         .join("\n\n");
 
+      const existingIdeas = getExistingIdeas();
+      const existingIdeasPrompt = `
+The user already considered the following idea as good. Make sure your new ideas are meaningfully different from these:
+${existingIdeas.map((idea) => `- ${idea.title} (${idea.sourceIds.join(", ")})`).join("\n")}
+        `.trim();
+
       const newIdeas = await openai.responses.create({
         model: "o3-mini",
         input: `
@@ -51,8 +56,8 @@ Generate innovative and inspiring ideas based on the content in the backlog:
 \`\`\`backlog
 ${serializedGraph}
 \`\`\`
-
-Respond 10 ideas in this JSON format:
+${existingIdeas ? `\n${existingIdeasPrompt}\n` : ""}
+Respond 7 ideas in this JSON format:
 type Response {
   ideas: {
     title: string;
@@ -101,20 +106,39 @@ type Response {
       loadingElement.style.display = "none";
     }
   });
+
+  // handle discard
+  document.getElementById("ideas").addEventListener("click", (event) => {
+    if (event.target.matches("[data-discard]")) {
+      const card = event.target.closest(".idea-card");
+      card?.remove();
+    }
+  });
 }
 
 function renderIdeaCard(title, description, sourceIds, owner, repo) {
   const sourceLinks = sourceIds.map((id) => `<a href="https://github.com/${owner}/${repo}/issues/${id}" target="_blank">#${id}</a>`).join(", ");
-  const newIssueLink = `<a href="https://github.com/${owner}/${repo}/issues/new?template=inspiration-template.md&title=${encodeURIComponent(
+  const newIssueUrl = `https://github.com/${owner}/${repo}/issues/new?template=inspiration-template.md&title=${encodeURIComponent(
     title
-  )}&body=${encodeURIComponent(description)}" target="_blank">Add</a>`;
+  )}&body=${encodeURIComponent(description)}`;
+  const newIssueLink = `<a href="${newIssueUrl}" target="_blank">Add</a>`;
+  const discardLink = `<a data-discard href="#">Discard</a>`;
 
   const card = document.createElement("div");
   card.className = "idea-card";
   card.innerHTML = `
     <h3>${title}</h3>
     <p>${description}</p>
-    <p>${newIssueLink} | sources: ${sourceLinks}</p>
+    <p>${newIssueLink} | ${discardLink} | sources: ${sourceLinks}</p>
   `;
   document.getElementById("ideas").appendChild(card);
+}
+
+function getExistingIdeas() {
+  const existingIdeas = document.querySelectorAll(".idea-card");
+  return Array.from(existingIdeas).map((card) => ({
+    title: card.querySelector("h3").textContent,
+    description: card.querySelector("p").textContent,
+    sourceIds: Array.from(card.querySelectorAll("a")).map((link) => link.textContent.replace("#", "")),
+  }));
 }
