@@ -70,9 +70,6 @@ type Response {
             type: "json_object",
           },
         },
-        reasoning: {
-          effort: "low",
-        },
         stream: true,
       });
 
