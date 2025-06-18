@@ -47,7 +47,7 @@ ${discardedIdeas.map((idea) => `- ${idea.title} (sources: ${idea.sourceIds.join(
         `.trim();
 
       const newIdeas = await openai.responses.create({
-        model: "o3-mini",
+        model: "gpt-4.1",
         input: `
 Generate innovative and inspiring ideas based on the content in the backlog:
 
